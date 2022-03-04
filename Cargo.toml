@@ -3,27 +3,12 @@ name = "periodic_do"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-# commonly used
-chrono = { version = "0.4", features = ["serde"] }
-uuid = { version = "0.8", features = ["serde", "v4"] }
-rand = "0.8.4"
-lazy_static = "1.4.0"
-once_cell = "1.9.0"
-
-# serialization
-serde = { version = "1.0", features = [ "derive" ] }
-serde_json = "1.0"
-serde_with = "1.12.0"
-toml = "0.5"
-
-# algorithms
-itertools = "0.10.3"
-
-tokio = { version = "1.15", features = ["full"] }
-thiserror = "1.0"
+# utilities
+chrono = { version = "0.4" }
 log = "0.4"
-async-trait = "0.1"
+thiserror = "1.0"
 
+tokio = { version = "1.15", features = ["sync", "time", "rt"] }
+async-trait = "0.1"
