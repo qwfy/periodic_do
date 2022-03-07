@@ -16,10 +16,19 @@ pub trait Job: std::marker::Sync + std::marker::Send + 'static {
     /// Given the current status of the job, what to to next?
     fn get_action(&self) -> Action;
 
-    /// Run the job
+    /// Run the job.
+    ///
+    /// Note that, if running the job is not guaranteed to be success,
+    /// and the failure should be handled,
+    /// then you can use a `Result<_, _>` as the `Outcome`,
+    /// and later handle it in the `update` function.
     async fn run(&self) -> Self::Outcome;
 
-    /// Update the job with the outcome of the run
+    /// Update the job with the outcome of the run.
+    ///
+    /// `run` and `update ` is called in succession,
+    /// the `update` should advance the state of the job - if your `Outcome` indicates so.
+    /// You can choose to not modify `self` in this function call - if you do not want to advance the state of the job.
     ///
     /// # Arguments:
     ///
@@ -49,10 +58,6 @@ pub(crate) struct QueuedJob<T: Job> {
 pub(crate) type ProtectedQueuedJob<T> = Arc<RwLock<QueuedJob<T>>>;
 
 pub(crate) type ProtectedQueuedJobs<T> = Arc<RwLock<VecDeque<ProtectedQueuedJob<T>>>>;
-
-
-
-
 
 
 #[derive(Clone)]
