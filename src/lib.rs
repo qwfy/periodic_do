@@ -26,7 +26,7 @@ use crate::data::ProtectedQueuedJobs;
 
 pub async fn loop_forever<T: Job>(
     capacity: Capacity,
-    receiver: &'static mut mpsc::Receiver<T>,
+    receiver: mpsc::Receiver<T>,
     initial_jobs: Vec<T>,
 ) {
     let jobs: VecDeque<_> = initial_jobs.into_iter()
@@ -61,7 +61,8 @@ pub async fn loop_forever<T: Job>(
     }
 }
 
-async fn receive<T: Job>(shutdown: Arc<RwLock<bool>>, receiver: &mut mpsc::Receiver<T>, jobs: ProtectedQueuedJobs<T>) {
+async fn receive<T: Job>(shutdown: Arc<RwLock<bool>>, receiver: mpsc::Receiver<T>, jobs: ProtectedQueuedJobs<T>) {
+    let mut receiver = receiver;
     loop {
         match receiver.recv().await {
             None => {
