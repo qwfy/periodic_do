@@ -32,6 +32,7 @@ pub async fn loop_forever<T: Job>(
     let jobs: VecDeque<_> = initial_jobs.into_iter()
         .map(wrap_job)
         .collect();
+    info!("Start with {} initial jobs", jobs.len());
     let jobs = Arc::new(RwLock::new(jobs));
 
     // The maximum number of running jobs
@@ -45,6 +46,7 @@ pub async fn loop_forever<T: Job>(
         {
             let shutdown = shutdown.read().await;
             if *shutdown == true {
+                info!("Shutdown is set, returning");
                 return ();
             }
         }
@@ -52,13 +54,17 @@ pub async fn loop_forever<T: Job>(
         {
             let shutdown = shutdown.read().await;
             if *shutdown == true {
+                info!("Shutdown is set, returning");
                 return ();
             }
         }
 
         // TODO: select shutdown
+        debug!("Sleep for {} seconds before the next sweep", sleep_time);
         tokio::time::sleep(std::time::Duration::from_secs(sleep_time as u64)).await;
     }
+
+    info!("Loop forever will now exit");
 }
 
 async fn receive<T: Job>(shutdown: Arc<RwLock<bool>>, receiver: mpsc::Receiver<T>, jobs: ProtectedQueuedJobs<T>) {
@@ -66,14 +72,18 @@ async fn receive<T: Job>(shutdown: Arc<RwLock<bool>>, receiver: mpsc::Receiver<T
     loop {
         match receiver.recv().await {
             None => {
+                info!("No more sender, setting shutdown event");
                 let mut shutdown = shutdown.write().await;
                 *shutdown = true;
+                info!("Will now stop receiving new messages");
                 return ();
             },
             Some(job) => {
+                debug!("Got a new job");
                 let job = wrap_job(job);
                 let mut jobs = jobs.write().await;
                 jobs.push_back(job);
+                debug!("New job added to queue");
             }
         }
     }
@@ -154,6 +164,7 @@ async fn schedule_one<T: Job>(
 ) -> (bool, Option<u32>) {
     let job_clone = job.clone();
     let job = job.read().await;
+    let job_display = job.job.show();
 
     let action = job.job.get_action();
 
@@ -168,10 +179,11 @@ async fn schedule_one<T: Job>(
             } else {
                 match job.ticket.clone().try_acquire_owned() {
                     Err(_) => {
-                        debug!("Skip dispatching job {}, for there is one already running", &job.job.show());
+                        info!("Skip dispatching job {}, for there is one already running", &job_display);
                         (true, no_schedule_hint)
                     }
                     Ok(ticket) => {
+                        info!("Spawn for job {}", &job_display);
                         tokio::spawn(run_job(slot, ticket, job_clone));
                         (true, no_schedule_hint)
                     }
@@ -186,6 +198,7 @@ async fn run_job<T: Job>(slot: OwnedSemaphorePermit, ticket: OwnedSemaphorePermi
     // Run the job without holding the write lock
     let outcome = {
         let job = job.read().await;
+        debug!("Running job {}", &job.job.show());
         job.job.run().await
     };
     {
