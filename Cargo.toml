@@ -2,6 +2,11 @@
 name = "periodic_do"
 version = "0.1.0"
 edition = "2018"
+description = "Run task periodically until it reaches a terminal state"
+homepage = "https://github.com/qwfy/periodic_do"
+repository = "https://github.com/qwfy/periodic_do"
+authors = ["Incomplete"]
+license = "MIT"
 
 
 [dependencies]
