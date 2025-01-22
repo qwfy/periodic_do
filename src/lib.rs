@@ -1,8 +1,8 @@
 use std::sync::Arc;
 use std::collections::VecDeque;
 
-use log::debug;
-use log::info;
+use tracing::debug;
+use tracing::info;
 use chrono::Utc;
 use tokio::sync::OwnedSemaphorePermit;
 use tokio::sync::RwLock;
@@ -46,16 +46,16 @@ pub async fn loop_forever<T: Job>(
         {
             let shutdown = shutdown.read().await;
             if *shutdown == true {
-                info!("Shutdown is set, returning");
-                return ();
+                info!("Shutdown is set, exiting loop");
+                break;
             }
         }
         let sleep_time = sweep_once(capacity.clone(), jobs.clone(), slots.clone()).await;
         {
             let shutdown = shutdown.read().await;
             if *shutdown == true {
-                info!("Shutdown is set, returning");
-                return ();
+                info!("Shutdown is set, exiting loop");
+                break;
             }
         }
 
