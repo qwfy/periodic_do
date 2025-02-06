@@ -37,6 +37,7 @@ pub trait Job: std::marker::Sync + std::marker::Send + 'static {
 }
 
 /// Action to be taken given the current status of the job
+#[derive(Debug)]
 pub enum Action {
     /// Do not schedule the job to be run
     DoNothing,

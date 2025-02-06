@@ -167,6 +167,7 @@ async fn schedule_one<T: Job>(
     let job_display = job.job.show();
 
     let action = job.job.get_action();
+    debug!("Job {} has action {:?}", &job_display, action);
 
     let no_schedule_hint = None;
 
